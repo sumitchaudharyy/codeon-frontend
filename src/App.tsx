@@ -7,6 +7,7 @@ import LoginPage from './pages/LoginPage';
 import SignupPage from './pages/SignupPage';
 import DashboardPage from './pages/DashboardPage';
 import ProtectedRoute from './components/ProtectedRoute';
+import AdminPage from './pages/AdminPage';
 
 export default function App() {
   return (
@@ -18,6 +19,7 @@ export default function App() {
         <Route path="/compiler" element={<CompilerPage />} />
         <Route path="/analyzer" element={<AnalyzerPage />} />
         <Route path="/docs" element={<DocsPage />} />
+        <Route path="/admin" element={<AdminPage />} />
         
         <Route path="/dashboard" element={
           <ProtectedRoute>
