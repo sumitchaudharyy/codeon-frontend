@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Users, Trash2, Mail, Calendar, Shield, ArrowLeft, RefreshCw } from "lucide-react";
+import { useToast } from "../context/ToastContext";
+import { useConfirm } from "../context/ConfirmContext";
 
 interface User {
   _id: string;
@@ -17,6 +19,8 @@ export default function AdminPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const navigate = useNavigate();
+  const toast = useToast();
+  const { confirm } = useConfirm();
 
   useEffect(() => {
     fetchUsers();
@@ -26,7 +30,7 @@ export default function AdminPage() {
     try {
       setLoading(true);
       setError("");
-      
+
       const token = localStorage.getItem("token");
       if (!token) {
         navigate("/login");
@@ -34,9 +38,7 @@ export default function AdminPage() {
       }
 
       const res = await fetch(`${API_URL}/api/admin/users`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+        headers: { Authorization: `Bearer ${token}` },
       });
 
       const data = await res.json();
@@ -53,11 +55,14 @@ export default function AdminPage() {
 
       if (data.success) {
         setUsers(data.users);
+        toast.success("Users loaded", `Found ${data.count} registered users`);
       } else {
         setError(data.error || "Failed to fetch users");
+        toast.error("Failed to load users", data.error);
       }
     } catch (err) {
       setError("Network error. Please try again.");
+      toast.error("Network error", "Unable to connect to server");
       console.error(err);
     } finally {
       setLoading(false);
@@ -65,27 +70,33 @@ export default function AdminPage() {
   };
 
   const deleteUser = async (id: string, username: string) => {
-    if (!confirm(`Delete user "${username}"? This cannot be undone!`)) return;
+    const confirmed = await confirm({
+      title: "Delete User?",
+      message: `Are you sure you want to delete "${username}"? This action cannot be undone.`,
+      confirmText: "Delete",
+      cancelText: "Cancel",
+      type: "danger",
+    });
+
+    if (!confirmed) return;
 
     try {
       const token = localStorage.getItem("token");
       const res = await fetch(`${API_URL}/api/admin/users/${id}`, {
         method: "DELETE",
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+        headers: { Authorization: `Bearer ${token}` },
       });
 
       const data = await res.json();
 
       if (data.success) {
         setUsers(users.filter((u) => u._id !== id));
-        alert("✅ User deleted successfully!");
+        toast.success("User deleted", `${username} has been removed`);
       } else {
-        alert("❌ " + (data.error || "Failed to delete"));
+        toast.error("Delete failed", data.error || "Something went wrong");
       }
     } catch (err) {
-      alert("❌ Network error");
+      toast.error("Network error", "Unable to delete user");
     }
   };
 

@@ -2,9 +2,11 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import OAuthButtons from '../components/OAuthButtons';
 import { API_URL } from '../utils/api';
+import { useToast } from "../context/ToastContext";
 
 export default function SignupPage() {
   const navigate = useNavigate();
+  const { addToast } = useToast();
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -18,6 +20,7 @@ export default function SignupPage() {
 
     if (password !== confirmPassword) {
       setError('Passwords do not match.');
+      addToast('Passwords do not match.', 'error');
       return;
     }
 
@@ -34,12 +37,14 @@ export default function SignupPage() {
 
       if (!res.ok) {
         setError(data.error || 'Signup failed');
+        addToast(data.error || 'Signup failed', 'error');
         return;
       }
 
       navigate("/login");
     } catch (err) {
       setError('Network error. Please try again.');
+      addToast('Network error. Please try again.', 'error');
     } finally {
       setLoading(false);
     }

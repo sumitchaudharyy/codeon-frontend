@@ -2,9 +2,11 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import OAuthButtons from "../components/OAuthButtons";
 import { API_URL } from '../utils/api';
+import { useToast } from "../context/ToastContext";
 
 export default function LoginPage() {
   const navigate = useNavigate();
+  const { addToast } = useToast();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -26,6 +28,7 @@ export default function LoginPage() {
 
       if (!res.ok) {
         setError(data.error || "Login failed");
+        addToast(data.error || "Login failed", "error");
         return;
       }
 
@@ -34,6 +37,7 @@ export default function LoginPage() {
       navigate("/dashboard");
     } catch (err) {
       setError('Network error. Please try again.');
+      addToast('Network error. Please try again.', "error");
     } finally {
       setLoading(false);
     }
