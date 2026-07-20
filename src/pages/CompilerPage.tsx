@@ -3,8 +3,7 @@ import { Link } from 'react-router-dom';
 import { Play, RotateCcw, Copy, Check, Trash2, ChevronDown, Eye, Terminal, BarChart3, Info } from 'lucide-react';
 import { LANGUAGE_CONFIG, STARTER_CODE, type Language } from '../types/languages';
 import CodeEditor from '../components/CodeEditor';
-import { useState } from "react";
-import ConfirmModal from "../components/ConfirmModal";
+import ConfirmModal from '../components/ConfirmModal';
 
 const JUDGE0_URL = "https://ce.judge0.com/submissions";
 const STORAGE_KEY = "codeon_compiler_state";
@@ -26,7 +25,6 @@ function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-// Detect if code needs input
 function codeRequiresInput(language: Language, code: string): boolean {
   if (language === 'javascript') return /\breadline\s*\(|\binput\s*\(/.test(code);
   if (language === 'python') return /\binput\s*\(/.test(code);
@@ -90,11 +88,9 @@ async function runViaJudge0(code: string, stdin: string, judge0Id: number): Prom
   const parts: string[] = [];
   if (data.compile_output) parts.push("Compile:\n" + data.compile_output.trim());
   if (data.stdout) parts.push(data.stdout.trimEnd());
-  
-  // Handle stderr - check for input-related errors
+
   if (data.stderr) {
     const stderr = data.stderr.trim();
-    // If error is about missing input, treat as info not error
     if (/NoSuchElementException|EOFError|InputMismatchException|scanf.*returned|reading input/i.test(stderr)) {
       return {
         output: "✅ Code compiled successfully!\n\n💡 This program requires input. Please enter values in the 'Standard Input' box above and click Run again.",
@@ -106,7 +102,7 @@ async function runViaJudge0(code: string, stdin: string, judge0Id: number): Prom
     }
     parts.push("Runtime Error:\n" + stderr);
   }
-  
+
   if (data.message) parts.push(data.message);
 
   const status = data.status?.description || "Unknown";
@@ -172,7 +168,6 @@ export default function CompilerPage() {
     setIsInfo(false);
     setStatusMessage('Running...');
 
-    // Check if code needs input but none provided
     if (config.showInput && !input.trim() && codeRequiresInput(language, code)) {
       setOutput("✅ Code compiled successfully!\n\n💡 This program requires input.\n\nPlease enter values in the 'Standard Input' box below and click Run again.\n\nExample:\n- For readline() / input() / scanf(): enter one value per line\n- For Scanner.nextInt(): enter numbers on separate lines");
       setIsInfo(true);
@@ -196,7 +191,6 @@ export default function CompilerPage() {
           result = { output: out, status: 'Success', meta: '—', isError: false };
         } catch (err: any) {
           const errMsg = err.message || String(err);
-          // Check if error is about undefined readline/input
           if (/readline is not defined|input is not defined|Cannot read/i.test(errMsg)) {
             result = {
               output: "✅ Code compiled successfully!\n\n💡 This program requires input. Please enter values in the 'Standard Input' box below and click Run again.",
@@ -230,14 +224,28 @@ export default function CompilerPage() {
     }
   }, [language, code, input, isRunning, config, persistCode]);
 
-  const handleReset = () => {
-  setShowResetModal(true);
-};
+  const handleReset = () => setShowResetModal(true);
 
-const confirmReset = () => {
-  setCode(starterCode);  // your reset logic
-  setShowResetModal(false);
-};
+  const confirmReset = () => {
+    setCode(STARTER_CODE[language]);
+    setInput('');
+    setOutput('Output will appear here after you run your code.');
+    setIsError(false);
+    setIsInfo(false);
+    setStatusMessage('Ready to run');
+    setShowResetModal(false);
+  };
+
+  const handleClear = () => setShowClearModal(true);
+
+  const confirmClear = () => {
+    setOutput('Output cleared.');
+    setIsError(false);
+    setIsInfo(false);
+    setStatusMessage('Ready to run');
+    setExecutionTime('—');
+    setShowClearModal(false);
+  };
 
   const handleCopy = async () => {
     await navigator.clipboard.writeText(code);
@@ -262,7 +270,6 @@ const confirmReset = () => {
 
   return (
     <div className="h-screen flex flex-col bg-[#0f172a] text-white overflow-hidden">
-      {/* Header */}
       <header className="bg-[#1e293b] border-b border-[#334155]">
         <nav className="flex items-center justify-between px-4 sm:px-6 py-3">
           <Link to="/" className="text-xl font-bold">
@@ -291,7 +298,6 @@ const confirmReset = () => {
         </nav>
       </header>
 
-      {/* Toolbar */}
       <div className="bg-[#1e293b] border-b border-[#334155] px-4 sm:px-6 py-3">
         <div className="flex flex-wrap items-center gap-3">
           <div className="relative">
@@ -323,7 +329,7 @@ const confirmReset = () => {
             {isRunning ? 'Running...' : 'Run'}
           </button>
 
-          <button onClick={() => { setOutput('Output cleared.'); setIsError(false); setIsInfo(false); }} className="flex items-center gap-1.5 bg-[#334155] hover:bg-[#475569] px-3 py-2 rounded-lg text-sm">
+          <button onClick={handleClear} className="flex items-center gap-1.5 bg-[#334155] hover:bg-[#475569] px-3 py-2 rounded-lg text-sm">
             <Trash2 className="w-3.5 h-3.5" /> Clear
           </button>
           <button onClick={handleReset} className="flex items-center gap-1.5 bg-[#334155] hover:bg-[#475569] px-3 py-2 rounded-lg text-sm">
@@ -337,18 +343,17 @@ const confirmReset = () => {
             <BarChart3 className="w-3.5 h-3.5" /> Analyze
           </Link>
 
-          {/* Font Size Controls */}
           <div className="flex items-center gap-1 ml-auto">
-            <button 
-              onClick={() => handleFontSize(-1)} 
+            <button
+              onClick={() => handleFontSize(-1)}
               className="w-7 h-7 flex items-center justify-center bg-[#334155] hover:bg-[#475569] rounded text-xs"
               title="Decrease font size"
             >
               A-
             </button>
             <span className="text-xs text-slate-400 px-2 min-w-[30px] text-center">{fontSize}</span>
-            <button 
-              onClick={() => handleFontSize(1)} 
+            <button
+              onClick={() => handleFontSize(1)}
               className="w-7 h-7 flex items-center justify-center bg-[#334155] hover:bg-[#475569] rounded text-xs"
               title="Increase font size"
             >
@@ -360,9 +365,7 @@ const confirmReset = () => {
         </div>
       </div>
 
-      {/* Main Grid */}
       <div className="flex-1 grid grid-cols-1 lg:grid-cols-2 overflow-hidden">
-        {/* Editor with CodeMirror */}
         <div className="flex flex-col border-r border-[#334155] overflow-hidden">
           <div className="flex items-center justify-between px-4 py-2 bg-[#1e293b]/50 border-b border-[#334155]">
             <span className="text-sm font-medium flex items-center gap-2">
@@ -374,16 +377,10 @@ const confirmReset = () => {
             </span>
           </div>
           <div className="flex-1 overflow-hidden bg-[#0f172a]">
-            <CodeEditor
-              value={code}
-              onChange={setCode}
-              language={language}
-              fontSize={fontSize}
-            />
+            <CodeEditor value={code} onChange={setCode} language={language} fontSize={fontSize} />
           </div>
         </div>
 
-        {/* IO Panel */}
         <div className="flex flex-col overflow-hidden">
           {config.showInput && (
             <div className="h-[140px] flex flex-col border-b border-[#334155]">
@@ -447,12 +444,12 @@ const confirmReset = () => {
                   </pre>
                 </div>
               ) : (
-                <pre 
+                <pre
                   className={`p-4 font-mono whitespace-pre-wrap break-words ${
-                    isError ? 'text-amber-400' : 
-                    output.includes('will appear') || output.includes('cleared') ? 'text-slate-500' : 
-                    'text-green-400'
-                  }`}
+                    isError ? 'text-amber-400' :
+                      output.includes('will appear') || output.includes('cleared') ? 'text-slate-500' :
+                        'text-green-400'
+                    }`}
                   style={{ fontSize: `${Math.max(fontSize - 1, 12)}px` }}
                 >
                   {output}
@@ -473,7 +470,6 @@ const confirmReset = () => {
         </div>
       </div>
 
-      {/* Status Bar */}
       <div className="flex items-center justify-between px-4 sm:px-6 py-2 bg-blue-600 text-white text-xs">
         <div className="flex items-center gap-3">
           <span className="px-2 py-0.5 rounded font-bold" style={{ background: config.color, color: config.color === '#f7df1e' || config.color === '#a8b9cc' ? '#000' : '#fff' }}>
@@ -486,13 +482,35 @@ const confirmReset = () => {
       </div>
 
       {isRunning && (
-        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 backdrop-blur-sm">
+        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-40 backdrop-blur-sm">
           <div className="bg-[#1e293b] rounded-2xl p-8 text-center border border-[#334155]">
             <div className="w-12 h-12 border-4 border-blue-500/30 border-t-blue-500 rounded-full animate-spin mx-auto mb-4" />
             <p className="text-white font-medium">Running {config.label}...</p>
           </div>
         </div>
       )}
+
+      <ConfirmModal
+        isOpen={showResetModal}
+        title="Reset Code?"
+        message={`Your current ${config.label} code will be discarded and reset to the default starter code. This action cannot be undone.`}
+        confirmText="Yes, Reset"
+        cancelText="Cancel"
+        type="warning"
+        onConfirm={confirmReset}
+        onCancel={() => setShowResetModal(false)}
+      />
+
+      <ConfirmModal
+        isOpen={showClearModal}
+        title="Clear Output?"
+        message="This will remove all output from the console. Your code will remain unchanged."
+        confirmText="Yes, Clear"
+        cancelText="Cancel"
+        type="info"
+        onConfirm={confirmClear}
+        onCancel={() => setShowClearModal(false)}
+      />
     </div>
   );
 }

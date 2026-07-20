@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, ReactNode, useCallback } from "react";
+import { createContext, useContext, useState, useCallback, type ReactNode } from "react";
 import { CheckCircle, XCircle, AlertTriangle, Info, X } from "lucide-react";
 
 type ToastType = "success" | "error" | "warning" | "info";
@@ -87,7 +87,6 @@ export const ToastProvider = ({ children }: { children: ReactNode }) => {
     <ToastContext.Provider value={{ showToast, success, error, warning, info }}>
       {children}
 
-      {/* Toast Container */}
       <div className="fixed top-4 right-4 z-[9999] flex flex-col gap-3 max-w-md w-full pointer-events-none">
         {toasts.map((toast) => {
           const { icon: Icon, bg, border, iconColor, progressBar } = config[toast.type];
@@ -115,7 +114,6 @@ export const ToastProvider = ({ children }: { children: ReactNode }) => {
                 </button>
               </div>
 
-              {/* Progress Bar */}
               {toast.duration && toast.duration > 0 && (
                 <div className="h-1 bg-white/10 relative overflow-hidden">
                   <div

@@ -6,7 +6,7 @@ import { useToast } from "../context/ToastContext";
 
 export default function LoginPage() {
   const navigate = useNavigate();
-  const { addToast } = useToast();
+  const toast = useToast();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -28,16 +28,17 @@ export default function LoginPage() {
 
       if (!res.ok) {
         setError(data.error || "Login failed");
-        addToast(data.error || "Login failed", "error");
+        toast.error("Login Failed", data.error || "Please check your credentials");
         return;
       }
 
       localStorage.setItem("token", data.token);
       localStorage.setItem("user", JSON.stringify(data.user));
+      toast.success("Welcome back!", `Logged in as ${data.user.username}`);
       navigate("/dashboard");
     } catch (err) {
       setError('Network error. Please try again.');
-      addToast('Network error. Please try again.', "error");
+      toast.error("Network Error", "Please check your connection and try again");
     } finally {
       setLoading(false);
     }

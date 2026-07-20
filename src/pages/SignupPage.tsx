@@ -6,7 +6,7 @@ import { useToast } from "../context/ToastContext";
 
 export default function SignupPage() {
   const navigate = useNavigate();
-  const { addToast } = useToast();
+  const toast = useToast();
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -20,7 +20,7 @@ export default function SignupPage() {
 
     if (password !== confirmPassword) {
       setError('Passwords do not match.');
-      addToast('Passwords do not match.', 'error');
+      toast.error('Password Mismatch', 'Passwords do not match. Please try again.');
       return;
     }
 
@@ -37,14 +37,15 @@ export default function SignupPage() {
 
       if (!res.ok) {
         setError(data.error || 'Signup failed');
-        addToast(data.error || 'Signup failed', 'error');
+        toast.error('Signup Failed', data.error || 'Please try again');
         return;
       }
 
+      toast.success('Account Created!', 'Please login to continue');
       navigate("/login");
     } catch (err) {
       setError('Network error. Please try again.');
-      addToast('Network error. Please try again.', 'error');
+      toast.error('Network Error', 'Please check your connection');
     } finally {
       setLoading(false);
     }

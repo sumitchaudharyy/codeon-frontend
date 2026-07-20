@@ -2,9 +2,9 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import SiteNav from '../components/SiteNav';
 import SiteFooter from '../components/SiteFooter';
-import { 
-  ArrowRight, CheckCircle2, AlertTriangle, Info, Lightbulb, 
-  AlertCircle, Zap, Code2, Globe, Play, Square, TrendingUp 
+import {
+  ArrowRight, CheckCircle2, AlertTriangle, Info, Lightbulb,
+  AlertCircle, Zap, Code2, Globe, Play, Square
 } from 'lucide-react';
 
 interface OptimizationTip {
@@ -59,7 +59,7 @@ function analyzeCode(code: string): AnalysisResult | null {
   else if (/function\s+\w+\(|console\.log|const\s+|let\s+/.test(code)) language = 'JavaScript';
 
   const nestedLoops = /for\s*\([^)]*\)\s*\{[\s\S]*?(for|while)\s*\(/.test(code);
-  
+
   let recursion = false;
   const funcs = [...code.matchAll(/(?:def|function)\s+(\w+)\s*\(/g)];
   funcs.forEach(match => {
@@ -151,7 +151,7 @@ for (let i = 0; i < n; i++) {
 
 export default function AnalyzerPage() {
   const [activeTab, setActiveTab] = useState<'analyzer' | 'stresstest'>('analyzer');
-  
+
   // Analyzer state
   const [code, setCode] = useState('');
   const [result, setResult] = useState<AnalysisResult | null>(null);
@@ -263,8 +263,8 @@ export default function AnalyzerPage() {
     setIsStressTesting(false);
   };
 
-  const scoreColor = result && result.score >= 75 ? 'from-emerald-400 to-green-500' 
-    : result && result.score >= 50 ? 'from-[#7c5cff] to-[#a78bfa]' 
+  const scoreColor = result && result.score >= 75 ? 'from-emerald-400 to-green-500'
+    : result && result.score >= 50 ? 'from-[#7c5cff] to-[#a78bfa]'
     : 'from-rose-500 to-red-500';
 
   return (
