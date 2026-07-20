@@ -1,10 +1,17 @@
+import { useToast } from "../context/ToastContext";
+
 interface Props {
   action: string;
 }
 
 export default function OAuthButtons({ action }: Props) {
+  const toast = useToast();
+
   const handleOAuth = (provider: string) => {
-    alert(`${provider} sign-in coming soon!`);
+    toast.info(
+      `${provider} Coming Soon! 🚀`,
+      `${provider} sign-in will be available in the next update.`
+    );
   };
 
   return (
@@ -30,6 +37,15 @@ export default function OAuthButtons({ action }: Props) {
               color: 'white',
               fontSize: '0.95rem',
               cursor: 'pointer',
+              transition: 'all 0.2s',
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.background = 'rgba(255,255,255,0.05)';
+              e.currentTarget.style.borderColor = '#475569';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = 'transparent';
+              e.currentTarget.style.borderColor = '#334155';
             }}
           >
             {action} with {provider}
