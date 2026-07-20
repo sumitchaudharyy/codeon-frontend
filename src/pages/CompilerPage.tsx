@@ -3,6 +3,8 @@ import { Link } from 'react-router-dom';
 import { Play, RotateCcw, Copy, Check, Trash2, ChevronDown, Eye, Terminal, BarChart3, Info } from 'lucide-react';
 import { LANGUAGE_CONFIG, STARTER_CODE, type Language } from '../types/languages';
 import CodeEditor from '../components/CodeEditor';
+import { useState } from "react";
+import ConfirmModal from "../components/ConfirmModal";
 
 const JUDGE0_URL = "https://ce.judge0.com/submissions";
 const STORAGE_KEY = "codeon_compiler_state";
@@ -115,6 +117,8 @@ async function runViaJudge0(code: string, stdin: string, judge0Id: number): Prom
 }
 
 export default function CompilerPage() {
+  const [showResetModal, setShowResetModal] = useState(false);
+  const [showClearModal, setShowClearModal] = useState(false);
   const [language, setLanguage] = useState<Language>('javascript');
   const [code, setCode] = useState('');
   const [input, setInput] = useState('');
@@ -227,14 +231,13 @@ export default function CompilerPage() {
   }, [language, code, input, isRunning, config, persistCode]);
 
   const handleReset = () => {
-    if (confirm(`Reset ${config.label} to starter code?`)) {
-      setCode(STARTER_CODE[language]);
-      setInput('');
-      setOutput('Code reset.');
-      setIsError(false);
-      setIsInfo(false);
-    }
-  };
+  setShowResetModal(true);
+};
+
+const confirmReset = () => {
+  setCode(starterCode);  // your reset logic
+  setShowResetModal(false);
+};
 
   const handleCopy = async () => {
     await navigator.clipboard.writeText(code);
