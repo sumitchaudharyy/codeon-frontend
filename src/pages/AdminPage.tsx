@@ -1,7 +1,9 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Users, Trash2, Mail, Calendar, Shield, ArrowLeft, RefreshCw } from "lucide-react";
+import { Users, Trash2, Mail, Calendar, Shield, ArrowLeft, RefreshCw, TrendingUp, UserCheck } from "lucide-react";
 import { API_URL } from "../utils/api";
+import { useToast } from "../context/ToastContext";
+import { useConfirm } from "../context/ConfirmContext";
 
 interface User {
   _id: string;
@@ -15,7 +17,10 @@ export default function AdminPage() {
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [searchTerm, setSearchTerm] = useState("");
   const navigate = useNavigate();
+  const { showToast } = useToast();
+  const { confirm } = useConfirm();
 
   useEffect(() => {
     fetchUsers();
@@ -61,7 +66,15 @@ export default function AdminPage() {
   };
 
   const deleteUser = async (id: string, username: string) => {
-    if (!confirm(`Delete user "${username}"? This cannot be undone!`)) return;
+    const confirmed = await confirm({
+      title: "Delete User",
+      message: `Are you sure you want to delete "${username}"? This action cannot be undone.`,
+      confirmText: "Delete",
+      cancelText: "Cancel",
+      variant: "danger",
+    });
+
+    if (!confirmed) return;
 
     try {
       const token = localStorage.getItem("token");
@@ -74,12 +87,12 @@ export default function AdminPage() {
 
       if (data.success) {
         setUsers(users.filter((u) => u._id !== id));
-        alert("✅ User deleted successfully!");
+        showToast("User deleted successfully", "success");
       } else {
-        alert("❌ " + (data.error || "Failed to delete"));
+        showToast(data.error || "Failed to delete user", "error");
       }
     } catch (err) {
-      alert("❌ Network error");
+      showToast("Network error. Please try again.", "error");
     }
   };
 
@@ -93,7 +106,22 @@ export default function AdminPage() {
     });
   };
 
-  // Loading
+  const getRelativeTime = (dateString: string) => {
+    const now = new Date();
+    const then = new Date(dateString);
+    const diffMs = now.getTime() - then.getTime();
+    const diffMins = Math.floor(diffMs / 60000);
+    const diffHours = Math.floor(diffMs / 3600000);
+    const diffDays = Math.floor(diffMs / 86400000);
+
+    if (diffMins < 1) return "Just now";
+    if (diffMins < 60) return `${diffMins}m ago`;
+    if (diffHours < 24) return `${diffHours}h ago`;
+    if (diffDays < 7) return `${diffDays}d ago`;
+    return formatDate(dateString);
+  };
+
+  // Loading state
   if (loading) {
     return (
       <div className="loading-container">
@@ -126,13 +154,34 @@ export default function AdminPage() {
     );
   }
 
+  // Real calculated stats
   const adminCount = users.filter((u) => u.role === "admin").length;
   const userCount = users.filter((u) => u.role === "user").length;
+  
+  const now = new Date();
   const thisMonth = users.filter((u) => {
     const created = new Date(u.createdAt);
-    const now = new Date();
-    return created.getMonth() === now.getMonth() && created.getFullYear() === now.getFullYear();
+    return created.getMonth() === now.getMonth() && 
+           created.getFullYear() === now.getFullYear();
   }).length;
+
+  const today = users.filter((u) => {
+    const created = new Date(u.createdAt);
+    return created.toDateString() === now.toDateString();
+  }).length;
+
+  const thisWeek = users.filter((u) => {
+    const created = new Date(u.createdAt);
+    const weekAgo = new Date();
+    weekAgo.setDate(weekAgo.getDate() - 7);
+    return created >= weekAgo;
+  }).length;
+
+  // Filter users by search
+  const filteredUsers = users.filter((user) =>
+    user.username.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    user.email.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
   return (
     <div className="admin-container">
@@ -151,7 +200,9 @@ export default function AdminPage() {
               </div>
               <div>
                 <h1 className="admin-title">Admin Panel</h1>
-                <p className="admin-subtitle">Manage all registered users</p>
+                <p className="admin-subtitle">
+                  Managing {users.length} registered {users.length === 1 ? "user" : "users"}
+                </p>
               </div>
             </div>
           </div>
@@ -161,7 +212,7 @@ export default function AdminPage() {
           </button>
         </div>
 
-        {/* Stats Cards */}
+        {/* Real Stats Cards */}
         <div className="admin-stats-grid">
           <div className="stat-card stat-card-purple">
             <div className="stat-card-header">
@@ -169,14 +220,20 @@ export default function AdminPage() {
               <Users size={22} color="#7c5cff" />
             </div>
             <p className="stat-card-value">{users.length}</p>
+            <p style={{ fontSize: '12px', color: '#94a3b8', marginTop: '4px' }}>
+              {today > 0 ? `+${today} today` : "No new users today"}
+            </p>
           </div>
 
           <div className="stat-card stat-card-blue">
             <div className="stat-card-header">
               <span className="stat-card-label" style={{ color: '#93c5fd' }}>Regular Users</span>
-              <Users size={22} color="#3b82f6" />
+              <UserCheck size={22} color="#3b82f6" />
             </div>
             <p className="stat-card-value">{userCount}</p>
+            <p style={{ fontSize: '12px', color: '#94a3b8', marginTop: '4px' }}>
+              {users.length > 0 ? `${Math.round((userCount / users.length) * 100)}% of total` : "0%"}
+            </p>
           </div>
 
           <div className="stat-card stat-card-yellow">
@@ -185,21 +242,49 @@ export default function AdminPage() {
               <Shield size={22} color="#eab308" />
             </div>
             <p className="stat-card-value">{adminCount}</p>
+            <p style={{ fontSize: '12px', color: '#94a3b8', marginTop: '4px' }}>
+              {users.length > 0 ? `${Math.round((adminCount / users.length) * 100)}% of total` : "0%"}
+            </p>
           </div>
 
           <div className="stat-card stat-card-green">
             <div className="stat-card-header">
-              <span className="stat-card-label" style={{ color: '#86efac' }}>This Month</span>
-              <Calendar size={22} color="#22c55e" />
+              <span className="stat-card-label" style={{ color: '#86efac' }}>This Week</span>
+              <TrendingUp size={22} color="#22c55e" />
             </div>
-            <p className="stat-card-value">{thisMonth}</p>
+            <p className="stat-card-value">{thisWeek}</p>
+            <p style={{ fontSize: '12px', color: '#94a3b8', marginTop: '4px' }}>
+              {thisMonth} this month
+            </p>
           </div>
+        </div>
+
+        {/* Search Bar */}
+        <div style={{ marginBottom: '16px' }}>
+          <input
+            type="text"
+            placeholder="Search users by name or email..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            style={{
+              width: '100%',
+              padding: '12px 16px',
+              background: '#111827',
+              border: '1px solid #1e293b',
+              borderRadius: '10px',
+              color: '#fff',
+              fontSize: '14px',
+              outline: 'none',
+            }}
+          />
         </div>
 
         {/* Users Table */}
         <div className="admin-table-container">
           <div className="admin-table-header">
-            <h2 className="admin-table-title">All Users</h2>
+            <h2 className="admin-table-title">
+              {searchTerm ? `Search Results (${filteredUsers.length})` : "All Users"}
+            </h2>
           </div>
           <div style={{ overflowX: 'auto' }}>
             <table className="admin-table">
@@ -214,7 +299,7 @@ export default function AdminPage() {
                 </tr>
               </thead>
               <tbody>
-                {users.map((user, index) => (
+                {filteredUsers.map((user, index) => (
                   <tr key={user._id}>
                     <td style={{ color: '#94a3b8' }}>{index + 1}</td>
                     <td>
@@ -245,13 +330,23 @@ export default function AdminPage() {
                       )}
                     </td>
                     <td style={{ fontSize: '13px', color: '#94a3b8' }}>
-                      {formatDate(user.createdAt)}
+                      <div>
+                        <div>{getRelativeTime(user.createdAt)}</div>
+                        <div style={{ fontSize: '11px', color: '#64748b', marginTop: '2px' }}>
+                          {formatDate(user.createdAt)}
+                        </div>
+                      </div>
                     </td>
                     <td>
                       <button
                         onClick={() => deleteUser(user._id, user.username)}
                         className="delete-btn"
                         title="Delete user"
+                        disabled={user.role === "admin"}
+                        style={{ 
+                          opacity: user.role === "admin" ? 0.4 : 1,
+                          cursor: user.role === "admin" ? "not-allowed" : "pointer"
+                        }}
                       >
                         <Trash2 size={16} />
                       </button>
@@ -262,9 +357,9 @@ export default function AdminPage() {
             </table>
           </div>
 
-          {users.length === 0 && (
+          {filteredUsers.length === 0 && (
             <div style={{ padding: '60px 20px', textAlign: 'center', color: '#64748b' }}>
-              No users registered yet
+              {searchTerm ? `No users found matching "${searchTerm}"` : "No users registered yet"}
             </div>
           )}
         </div>
