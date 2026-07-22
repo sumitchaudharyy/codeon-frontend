@@ -33,9 +33,7 @@ export default function AdminPage() {
       }
 
       const res = await fetch(`${API_URL}/api/admin/users`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+        headers: { Authorization: `Bearer ${token}` },
       });
 
       const data = await res.json();
@@ -57,7 +55,6 @@ export default function AdminPage() {
       }
     } catch (err) {
       setError("Network error. Please try again.");
-      console.error(err);
     } finally {
       setLoading(false);
     }
@@ -70,9 +67,7 @@ export default function AdminPage() {
       const token = localStorage.getItem("token");
       const res = await fetch(`${API_URL}/api/admin/users/${id}`, {
         method: "DELETE",
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+        headers: { Authorization: `Bearer ${token}` },
       });
 
       const data = await res.json();
@@ -98,27 +93,31 @@ export default function AdminPage() {
     });
   };
 
+  // Loading
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-950">
-        <div className="text-white text-xl flex items-center gap-3">
-          <RefreshCw className="w-6 h-6 animate-spin" />
-          Loading users...
+      <div className="loading-container">
+        <div className="loading-content">
+          <div className="loading-spinner" />
+          <p className="loading-text">Loading users...</p>
         </div>
       </div>
     );
   }
 
+  // Access Denied
   if (error) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-950 p-4">
-        <div className="max-w-md w-full bg-red-500/10 border border-red-500/30 rounded-xl p-8 text-center">
-          <Shield className="w-16 h-16 text-red-500 mx-auto mb-4" />
-          <h2 className="text-2xl font-bold text-white mb-2">Access Denied</h2>
-          <p className="text-red-300 mb-6">{error}</p>
+      <div className="access-denied-container">
+        <div className="access-denied-card">
+          <div className="access-denied-icon">
+            <Shield size={40} color="#ef4444" />
+          </div>
+          <h2 className="access-denied-title">Access Denied</h2>
+          <p className="access-denied-text">{error}</p>
           <button
             onClick={() => navigate("/dashboard")}
-            className="px-6 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-semibold transition"
+            className="access-denied-btn"
           >
             Go to Dashboard
           </button>
@@ -132,140 +131,129 @@ export default function AdminPage() {
   const thisMonth = users.filter((u) => {
     const created = new Date(u.createdAt);
     const now = new Date();
-    return (
-      created.getMonth() === now.getMonth() &&
-      created.getFullYear() === now.getFullYear()
-    );
+    return created.getMonth() === now.getMonth() && created.getFullYear() === now.getFullYear();
   }).length;
 
   return (
-    <div className="min-h-screen bg-gray-950 text-white p-4 md:p-8">
-      <div className="max-w-7xl mx-auto">
+    <div className="admin-container">
+      <div className="admin-wrapper">
+        
         {/* Header */}
-        <div className="flex items-center justify-between mb-8">
+        <div className="admin-header">
           <div>
-            <button
-              onClick={() => navigate("/dashboard")}
-              className="flex items-center gap-2 text-gray-400 hover:text-white mb-4 transition"
-            >
-              <ArrowLeft className="w-4 h-4" />
+            <button onClick={() => navigate("/dashboard")} className="admin-back-btn">
+              <ArrowLeft size={16} />
               Back to Dashboard
             </button>
-            <div className="flex items-center gap-3">
-              <Shield className="w-8 h-8 text-purple-500" />
-              <h1 className="text-3xl md:text-4xl font-bold">Admin Panel</h1>
+            <div className="admin-title-wrapper">
+              <div className="admin-icon-box">
+                <Shield size={26} color="white" />
+              </div>
+              <div>
+                <h1 className="admin-title">Admin Panel</h1>
+                <p className="admin-subtitle">Manage all registered users</p>
+              </div>
             </div>
-            <p className="text-gray-400 mt-2">Manage all registered users</p>
           </div>
-          <button
-            onClick={fetchUsers}
-            className="p-3 bg-purple-600 hover:bg-purple-700 rounded-lg transition"
-            title="Refresh"
-          >
-            <RefreshCw className="w-5 h-5" />
+          <button onClick={fetchUsers} className="admin-refresh-btn" title="Refresh">
+            <RefreshCw size={16} />
+            Refresh
           </button>
         </div>
 
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
-          <div className="bg-gradient-to-br from-purple-600/20 to-purple-900/20 border border-purple-500/30 rounded-xl p-6">
-            <div className="flex items-center justify-between mb-2">
-              <p className="text-purple-300 text-sm font-medium">Total Users</p>
-              <Users className="w-5 h-5 text-purple-500" />
+        <div className="admin-stats-grid">
+          <div className="stat-card stat-card-purple">
+            <div className="stat-card-header">
+              <span className="stat-card-label" style={{ color: '#cab9ff' }}>Total Users</span>
+              <Users size={22} color="#7c5cff" />
             </div>
-            <p className="text-3xl font-bold">{users.length}</p>
+            <p className="stat-card-value">{users.length}</p>
           </div>
 
-          <div className="bg-gradient-to-br from-blue-600/20 to-blue-900/20 border border-blue-500/30 rounded-xl p-6">
-            <div className="flex items-center justify-between mb-2">
-              <p className="text-blue-300 text-sm font-medium">Regular Users</p>
-              <Users className="w-5 h-5 text-blue-500" />
+          <div className="stat-card stat-card-blue">
+            <div className="stat-card-header">
+              <span className="stat-card-label" style={{ color: '#93c5fd' }}>Regular Users</span>
+              <Users size={22} color="#3b82f6" />
             </div>
-            <p className="text-3xl font-bold">{userCount}</p>
+            <p className="stat-card-value">{userCount}</p>
           </div>
 
-          <div className="bg-gradient-to-br from-yellow-600/20 to-yellow-900/20 border border-yellow-500/30 rounded-xl p-6">
-            <div className="flex items-center justify-between mb-2">
-              <p className="text-yellow-300 text-sm font-medium">Admins</p>
-              <Shield className="w-5 h-5 text-yellow-500" />
+          <div className="stat-card stat-card-yellow">
+            <div className="stat-card-header">
+              <span className="stat-card-label" style={{ color: '#fde68a' }}>Admins</span>
+              <Shield size={22} color="#eab308" />
             </div>
-            <p className="text-3xl font-bold">{adminCount}</p>
+            <p className="stat-card-value">{adminCount}</p>
           </div>
 
-          <div className="bg-gradient-to-br from-green-600/20 to-green-900/20 border border-green-500/30 rounded-xl p-6">
-            <div className="flex items-center justify-between mb-2">
-              <p className="text-green-300 text-sm font-medium">This Month</p>
-              <Calendar className="w-5 h-5 text-green-500" />
+          <div className="stat-card stat-card-green">
+            <div className="stat-card-header">
+              <span className="stat-card-label" style={{ color: '#86efac' }}>This Month</span>
+              <Calendar size={22} color="#22c55e" />
             </div>
-            <p className="text-3xl font-bold">{thisMonth}</p>
+            <p className="stat-card-value">{thisMonth}</p>
           </div>
         </div>
 
         {/* Users Table */}
-        <div className="bg-gray-900 rounded-xl border border-gray-800 overflow-hidden">
-          <div className="p-6 border-b border-gray-800">
-            <h2 className="text-xl font-bold">All Users</h2>
+        <div className="admin-table-container">
+          <div className="admin-table-header">
+            <h2 className="admin-table-title">All Users</h2>
           </div>
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead className="bg-gray-800/50 border-b border-gray-800">
+          <div style={{ overflowX: 'auto' }}>
+            <table className="admin-table">
+              <thead>
                 <tr>
-                  <th className="text-left p-4 text-sm font-semibold text-gray-300">#</th>
-                  <th className="text-left p-4 text-sm font-semibold text-gray-300">User</th>
-                  <th className="text-left p-4 text-sm font-semibold text-gray-300">Email</th>
-                  <th className="text-left p-4 text-sm font-semibold text-gray-300">Role</th>
-                  <th className="text-left p-4 text-sm font-semibold text-gray-300">Joined</th>
-                  <th className="text-left p-4 text-sm font-semibold text-gray-300">Actions</th>
+                  <th>#</th>
+                  <th>User</th>
+                  <th>Email</th>
+                  <th>Role</th>
+                  <th>Joined</th>
+                  <th>Actions</th>
                 </tr>
               </thead>
               <tbody>
                 {users.map((user, index) => (
-                  <tr
-                    key={user._id}
-                    className="border-b border-gray-800 hover:bg-gray-800/30 transition"
-                  >
-                    <td className="p-4 text-gray-400">{index + 1}</td>
-                    <td className="p-4">
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center font-bold text-white">
+                  <tr key={user._id}>
+                    <td style={{ color: '#94a3b8' }}>{index + 1}</td>
+                    <td>
+                      <div className="user-info">
+                        <div className="user-avatar">
                           {user.username?.charAt(0).toUpperCase()}
                         </div>
                         <div>
-                          <p className="font-semibold">{user.username}</p>
-                          <p className="text-xs text-gray-500 font-mono">
-                            {user._id.slice(0, 12)}...
-                          </p>
+                          <p className="user-name">{user.username}</p>
+                          <p className="user-id">{user._id.slice(0, 12)}...</p>
                         </div>
                       </div>
                     </td>
-                    <td className="p-4">
-                      <div className="flex items-center gap-2 text-gray-300">
-                        <Mail className="w-4 h-4" />
-                        <span className="text-sm">{user.email}</span>
+                    <td>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#cbd5e1' }}>
+                        <Mail size={14} />
+                        <span style={{ fontSize: '13px' }}>{user.email}</span>
                       </div>
                     </td>
-                    <td className="p-4">
+                    <td>
                       {user.role === "admin" ? (
-                        <span className="px-3 py-1 bg-yellow-500/20 text-yellow-300 rounded-full text-xs font-semibold flex items-center gap-1 w-fit">
-                          <Shield className="w-3 h-3" />
-                          Admin
+                        <span className="role-badge role-badge-admin">
+                          <Shield size={12} />
+                          ADMIN
                         </span>
                       ) : (
-                        <span className="px-3 py-1 bg-blue-500/20 text-blue-300 rounded-full text-xs font-semibold w-fit inline-block">
-                          User
-                        </span>
+                        <span className="role-badge role-badge-user">USER</span>
                       )}
                     </td>
-                    <td className="p-4 text-sm text-gray-400">
+                    <td style={{ fontSize: '13px', color: '#94a3b8' }}>
                       {formatDate(user.createdAt)}
                     </td>
-                    <td className="p-4">
+                    <td>
                       <button
                         onClick={() => deleteUser(user._id, user.username)}
-                        className="p-2 rounded-lg bg-red-500/10 text-red-400 hover:bg-red-500/20 transition"
+                        className="delete-btn"
                         title="Delete user"
                       >
-                        <Trash2 className="w-4 h-4" />
+                        <Trash2 size={16} />
                       </button>
                     </td>
                   </tr>
@@ -275,7 +263,7 @@ export default function AdminPage() {
           </div>
 
           {users.length === 0 && (
-            <div className="p-12 text-center text-gray-500">
+            <div style={{ padding: '60px 20px', textAlign: 'center', color: '#64748b' }}>
               No users registered yet
             </div>
           )}
